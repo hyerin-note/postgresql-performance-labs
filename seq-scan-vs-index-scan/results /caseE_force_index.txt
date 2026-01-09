@@ -1,0 +1,37 @@
+enable_seqscan = on
+
+                                                               QUERY PLAN
+
+-------------------------------------------------------------------------------------------------------------------
+----------------------
+ Bitmap Heap Scan on orders  (cost=6233.84..49994.67 rows=559666 width=26) (actual time=44.112..293.627 rows=555813
+ loops=1)
+   Recheck Cond: (status = 1)
+   Heap Blocks: exact=36765
+   Buffers: shared read=37236
+   ->  Bitmap Index Scan on idx_orders_status  (cost=0.00..6093.93 rows=559666 width=0) (actual time=32.325..32.326
+ rows=555813 loops=1)
+         Index Cond: (status = 1)
+         Buffers: shared read=471
+ Planning Time: 0.152 ms
+ Execution Time: 335.291 ms
+
+
+
+enable_seqscan = off
+
+                                                               QUERY PLAN
+
+-------------------------------------------------------------------------------------------------------------------
+----------------------
+ Bitmap Heap Scan on orders  (cost=6233.84..49994.67 rows=559666 width=26) (actual time=41.923..310.799 rows=555813
+ loops=1)
+   Recheck Cond: (status = 1)
+   Heap Blocks: exact=36765
+   Buffers: shared read=37236
+   ->  Bitmap Index Scan on idx_orders_status  (cost=0.00..6093.93 rows=559666 width=0) (actual time=25.948..25.950
+ rows=555813 loops=1)
+         Index Cond: (status = 1)
+         Buffers: shared read=471
+ Planning Time: 0.153 ms
+ Execution Time: 351.014 ms
