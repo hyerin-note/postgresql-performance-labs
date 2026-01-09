@@ -1,0 +1,171 @@
+============================================================
+PostgreSQL Performance Analysis
+Seq Scan vs Index Scan
+============================================================
+
+This document contains detailed experiment results and analysis
+supporting the README summary. All experiments were conducted
+on PostgreSQL 16 using a table with approximately 5,000,000 rows.
+
+------------------------------------------------------------
+Environment
+------------------------------------------------------------
+- PostgreSQL: 16
+- Table: orders
+- Row count: ~5,000,000
+- Indexes:
+  - idx_orders_user_id (btree)
+  - idx_orders_status (btree)
+  - idx_orders_created_at (btree)
+
+------------------------------------------------------------
+Case A: High Selectivity (user_id = 42)
+------------------------------------------------------------
+Query:
+SELECT * FROM orders WHERE user_id = 42;
+
+Plan:
+- Bitmap Index Scan (idx_orders_user_id)
+- Bitmap Heap Scan
+
+Estimated rows: ~51
+Actual rows: ~47
+Execution Time: ~1 ms
+
+Analysis:
+The predicate has high selectivity, returning a very small number
+of rows. PostgreSQL chose an index-based plan. Bitmap Heap Scan
+was selected to batch heap page access efficiently.
+
+Estimated and actual row counts were closely aligned, indicating
+accurate table statistics.
+
+------------------------------------------------------------
+Case B-1: Low Selectivity Without Index (status = 1)
+------------------------------------------------------------
+Query:
+SELECT * FROM orders WHERE status = 1;
+
+Plan:
+- Sequential Scan
+
+Estimated rows: ~554,000
+Actual rows: ~555,000 (~11% of table)
+Execution Time: ~436 ms
+
+Analysis:
+A large portion of the table matched the predicate. Without an
+index, PostgreSQL performed a full table scan. A high number of
+rows were removed by the filter.
+
+------------------------------------------------------------
+Case B-2: Low Selectivity With Index (status = 1)
+------------------------------------------------------------
+Index:
+CREATE INDEX idx_orders_status ON orders(status);
+ANALYZE orders;
+
+Query:
+SELECT * FROM orders WHERE status = 1;
+
+Plan:
+- Bitmap Index Scan (idx_orders_status)
+- Bitmap Heap Scan
+
+Estimated rows: ~559,000
+Actual rows: ~555,000
+Heap Blocks accessed: ~36,700
+Execution Time: ~270 ms
+
+Analysis:
+Although selectivity is low, the index provided a performance
+improvement compared to a sequential scan. Bitmap Heap Scan
+was chosen as a compromise to reduce random heap access.
+
+The high number of heap blocks accessed highlights the limitation
+of indexes for low-selectivity predicates.
+
+------------------------------------------------------------
+Case C: Range Condition with ORDER BY and LIMIT
+------------------------------------------------------------
+Query:
+SELECT *
+FROM orders
+WHERE created_at >= now() - interval '1 day'
+ORDER BY created_at DESC
+LIMIT 100;
+
+Plan:
+- Index Scan Backward (idx_orders_created_at)
+
+Execution Time: <1 ms
+
+Analysis:
+The index satisfied both filtering and ordering requirements.
+The LIMIT allowed early termination, making index access highly
+efficient even on a large table.
+
+------------------------------------------------------------
+Case D: Cold vs Warm Cache
+------------------------------------------------------------
+Query:
+SELECT * FROM orders WHERE status = 1;
+
+Cold Cache:
+- Higher execution time
+- Buffers dominated by shared reads
+
+Warm Cache:
+- Lower execution time
+- Buffers dominated by shared hits
+
+Analysis:
+Even with the same execution plan, cache state had a major
+impact on performance. Execution time alone is insufficient
+for diagnosis without buffer statistics.
+
+------------------------------------------------------------
+Case E: Forcing Index Usage (enable_seqscan)
+------------------------------------------------------------
+Baseline:
+RESET enable_seqscan;
+SELECT * FROM orders WHERE status = 1;
+
+Forced:
+SET enable_seqscan = off;
+SELECT * FROM orders WHERE status = 1;
+
+Analysis:
+Forcing index usage did not improve performance for low-
+selectivity predicates. In some cases, performance degraded
+due to excessive heap page access.
+
+enable_seqscan is a diagnostic option and should not be used
+as a tuning method.
+
+------------------------------------------------------------
+random_page_cost Sensitivity
+------------------------------------------------------------
+Query:
+SELECT * FROM orders WHERE user_id = 42;
+
+random_page_cost = 4.0:
+- Bitmap-based plan preferred
+
+random_page_cost = 1.1:
+- Index Scan preferred
+- Lower execution time
+
+Analysis:
+Planner decisions are sensitive to I/O cost assumptions.
+Proper tuning of cost parameters is important for accurate
+query planning.
+
+------------------------------------------------------------
+Final Summary
+------------------------------------------------------------
+- Sequential Scan is often optimal for low-selectivity predicates.
+- Index Scan is most effective with high selectivity or LIMIT queries.
+- Bitmap Heap Scan provides a practical compromise.
+- Accurate statistics, cache awareness, and cost model tuning
+  are critical for understanding PostgreSQL planner behavior.
