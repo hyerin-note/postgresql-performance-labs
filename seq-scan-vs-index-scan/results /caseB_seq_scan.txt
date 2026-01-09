@@ -1,0 +1,10 @@
+                                                   QUERY PLAN
+-----------------------------------------------------------------------------------------------------------------
+ Seq Scan on orders  (cost=0.00..99265.50 rows=554504 width=26) (actual time=0.044..406.762 rows=555813 loops=1)
+   Filter: (status = 1)
+   Rows Removed by Filter: 4444187
+   Buffers: shared hit=733 read=36032
+ Planning:
+   Buffers: shared hit=5
+ Planning Time: 0.131 ms
+ Execution Time: 436.377 ms
