@@ -1,36 +1,49 @@
-Cold Cache
+============================================================
+Case D: Cold vs Warm Cache
+Query: SELECT * FROM orders WHERE status = 1;
+============================================================
 
-QUERY PLAN
+------------------------------
+[Cold Cache]
+------------------------------
 
--------------------------------------------------------------------------------------------------------------------
-----------------------
- Bitmap Heap Scan on orders  (cost=6233.84..49994.67 rows=559666 width=26) (actual time=38.761..323.243 rows=555813
- loops=1)
-   Recheck Cond: (status = 1)
-   Heap Blocks: exact=36765
-   Buffers: shared hit=3 read=37236 written=1
-   ->  Bitmap Index Scan on idx_orders_status  (cost=0.00..6093.93 rows=559666 width=0) (actual time=32.582..32.583
- rows=555813 loops=1)
-         Index Cond: (status = 1)
-         Buffers: shared hit=3 read=471
- Planning:
-   Buffers: shared hit=95 read=23
- Planning Time: 1.524 ms
- Execution Time: 352.875 ms
+EXPLAIN (ANALYZE, BUFFERS)
 
-Warm Cache
-                                                               QUERY PLAN
+Bitmap Heap Scan on orders
+  (cost=6233.84..49994.67 rows=559666 width=26)
+  (actual time=38.761..323.243 rows=555813 loops=1)
+  Recheck Cond: (status = 1)
+  Heap Blocks: exact=36765
+  Buffers: shared hit=3 read=37236 written=1
+  -> Bitmap Index Scan on idx_orders_status
+       (cost=0.00..6093.93 rows=559666 width=0)
+       (actual time=32.582..32.583 rows=555813 loops=1)
+       Index Cond: (status = 1)
+       Buffers: shared hit=3 read=471
 
--------------------------------------------------------------------------------------------------------------------
-----------------------
- Bitmap Heap Scan on orders  (cost=6233.84..49994.67 rows=559666 width=26) (actual time=57.392..269.015 rows=555813
- loops=1)
-   Recheck Cond: (status = 1)
-   Heap Blocks: exact=36765
-   Buffers: shared read=37236
-   ->  Bitmap Index Scan on idx_orders_status  (cost=0.00..6093.93 rows=559666 width=0) (actual time=41.685..41.686
- rows=555813 loops=1)
-         Index Cond: (status = 1)
-         Buffers: shared read=471
- Planning Time: 0.159 ms
- Execution Time: 299.647 ms
+Planning:
+  Buffers: shared hit=95 read=23
+Planning Time: 1.524 ms
+Execution Time: 352.875 ms
+
+
+------------------------------
+[Warm Cache]
+------------------------------
+
+EXPLAIN (ANALYZE, BUFFERS)
+
+Bitmap Heap Scan on orders
+  (cost=6233.84..49994.67 rows=559666 width=26)
+  (actual time=57.392..269.015 rows=555813 loops=1)
+  Recheck Cond: (status = 1)
+  Heap Blocks: exact=36765
+  Buffers: shared read=37236
+  -> Bitmap Index Scan on idx_orders_status
+       (cost=0.00..6093.93 rows=559666 width=0)
+       (actual time=41.685..41.686 rows=555813 loops=1)
+       Index Cond: (status = 1)
+       Buffers: shared read=471
+
+Planning Time: 0.159 ms
+Execution Time: 299.647 ms
