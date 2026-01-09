@@ -1,0 +1,14 @@
+                                                                       QUERY PLAN
+
+-------------------------------------------------------------------------------------------------------------------
+-------------------------------------
+ Limit  (cost=0.44..335.53 rows=100 width=26) (actual time=0.127..0.721 rows=100 loops=1)
+   Buffers: shared hit=7 read=98
+   ->  Index Scan Backward using idx_orders_created_at on orders  (cost=0.44..50290.87 rows=15008 width=26) (actual
+ time=0.124..0.703 rows=100 loops=1)
+         Index Cond: (created_at >= (now() - '1 day'::interval))
+         Buffers: shared hit=7 read=98
+ Planning:
+   Buffers: shared hit=16 read=13
+ Planning Time: 0.872 ms
+ Execution Time: 0.766 ms
