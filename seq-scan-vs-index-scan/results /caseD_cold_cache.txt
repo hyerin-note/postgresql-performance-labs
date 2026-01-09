@@ -47,3 +47,20 @@ Bitmap Heap Scan on orders
 
 Planning Time: 0.159 ms
 Execution Time: 299.647 ms
+
+------------------------------
+[Comparison Summary]
+------------------------------
+
+Cold Cache:
+- Execution Time: 352.875 ms
+- Buffers: shared read dominant (disk I/O)
+
+Warm Cache:
+- Execution Time: 299.647 ms
+- Buffers: shared hit dominant (memory access)
+
+Observation:
+- Execution plan is identical.
+- Performance difference is caused by cache state, not plan change.
+
