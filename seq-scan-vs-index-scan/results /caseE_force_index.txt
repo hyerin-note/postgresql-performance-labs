@@ -1,37 +1,72 @@
-enable_seqscan = on
+============================================================
+Case E: enable_seqscan ON vs OFF
+Query: SELECT * FROM orders WHERE status = 1;
+============================================================
 
-                                                               QUERY PLAN
+------------------------------
+[enable_seqscan = ON]
+------------------------------
 
--------------------------------------------------------------------------------------------------------------------
-----------------------
- Bitmap Heap Scan on orders  (cost=6233.84..49994.67 rows=559666 width=26) (actual time=44.112..293.627 rows=555813
- loops=1)
-   Recheck Cond: (status = 1)
-   Heap Blocks: exact=36765
-   Buffers: shared read=37236
-   ->  Bitmap Index Scan on idx_orders_status  (cost=0.00..6093.93 rows=559666 width=0) (actual time=32.325..32.326
- rows=555813 loops=1)
-         Index Cond: (status = 1)
-         Buffers: shared read=471
- Planning Time: 0.152 ms
- Execution Time: 335.291 ms
+EXPLAIN (ANALYZE, BUFFERS)
+
+Bitmap Heap Scan on orders
+  (cost=6233.84..49994.67 rows=559666 width=26)
+  (actual time=44.112..293.627 rows=555813 loops=1)
+  Recheck Cond: (status = 1)
+  Heap Blocks: exact=36765
+  Buffers: shared read=37236
+  -> Bitmap Index Scan on idx_orders_status
+       (cost=0.00..6093.93 rows=559666 width=0)
+       (actual time=32.325..32.326 rows=555813 loops=1)
+       Index Cond: (status = 1)
+       Buffers: shared read=471
+
+Planning Time: 0.152 ms
+Execution Time: 335.291 ms
 
 
+------------------------------
+[enable_seqscan = OFF]
+------------------------------
 
-enable_seqscan = off
+EXPLAIN (ANALYZE, BUFFERS)
 
-                                                               QUERY PLAN
+Bitmap Heap Scan on orders
+  (cost=6233.84..49994.67 rows=559666 width=26)
+  (actual time=41.923..310.799 rows=555813 loops=1)
+  Recheck Cond: (status = 1)
+  Heap Blocks: exact=36765
+  Buffers: shared read=37236
+  -> Bitmap Index Scan on idx_orders_status
+       (cost=0.00..6093.93 rows=559666 width=0)
+       (actual time=25.948..25.950 rows=555813 loops=1)
+       Index Cond: (status = 1)
+       Buffers: shared read=471
 
--------------------------------------------------------------------------------------------------------------------
-----------------------
- Bitmap Heap Scan on orders  (cost=6233.84..49994.67 rows=559666 width=26) (actual time=41.923..310.799 rows=555813
- loops=1)
-   Recheck Cond: (status = 1)
-   Heap Blocks: exact=36765
-   Buffers: shared read=37236
-   ->  Bitmap Index Scan on idx_orders_status  (cost=0.00..6093.93 rows=559666 width=0) (actual time=25.948..25.950
- rows=555813 loops=1)
-         Index Cond: (status = 1)
-         Buffers: shared read=471
- Planning Time: 0.153 ms
- Execution Time: 351.014 ms
+Planning Time: 0.153 ms
+Execution Time: 351.014 ms
+
+
+------------------------------
+[Comparison Summary]
+------------------------------
+
+enable_seqscan = ON:
+- Execution Time: 335.291 ms
+- Plan: Bitmap Index Scan + Bitmap Heap Scan
+
+enable_seqscan = OFF:
+- Execution Time: 351.014 ms
+- Plan: Bitmap Index Scan + Bitmap Heap Scan
+
+Observation:
+- Execution plans are effectively identical in both cases.
+- Disabling sequential scans did not force a different plan.
+- Execution time slightly increased when enable_seqscan was set to OFF.
+- This confirms that enable_seqscan is a diagnostic option and
+  does not guarantee better performance.
+
+Conclusion:
+- For low-selectivity predicates, forcing planner behavior does not
+  necessarily improve performance.
+- PostgreSQL planner’s default choice is often already optimal.
