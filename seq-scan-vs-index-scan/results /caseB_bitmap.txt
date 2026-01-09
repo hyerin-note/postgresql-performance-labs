@@ -1,0 +1,17 @@
+                                                               QUERY PLAN
+
+-------------------------------------------------------------------------------------------------------------------
+----------------------
+ Bitmap Heap Scan on orders  (cost=6233.84..49994.67 rows=559666 width=26) (actual time=33.146..237.160 rows=555813
+ loops=1)
+   Recheck Cond: (status = 1)
+   Heap Blocks: exact=36765
+   Buffers: shared hit=3 read=37236 written=388
+   ->  Bitmap Index Scan on idx_orders_status  (cost=0.00..6093.93 rows=559666 width=0) (actual time=24.029..24.030
+ rows=555813 loops=1)
+         Index Cond: (status = 1)
+         Buffers: shared hit=3 read=471 written=121
+ Planning:
+   Buffers: shared hit=47 read=1
+ Planning Time: 0.475 ms
+ Execution Time: 270.808 ms
