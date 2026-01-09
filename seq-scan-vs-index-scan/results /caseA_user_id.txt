@@ -1,0 +1,16 @@
+                                                         QUERY PLAN
+
+-------------------------------------------------------------------------------------------------------------------
+----------
+ Bitmap Heap Scan on orders  (cost=4.83..203.77 rows=51 width=26) (actual time=0.339..0.821 rows=47 loops=1)
+   Recheck Cond: (user_id = 42)
+   Heap Blocks: exact=47
+   Buffers: shared hit=2 read=48
+   ->  Bitmap Index Scan on idx_orders_user_id  (cost=0.00..4.82 rows=51 width=0) (actual time=0.157..0.158 rows=47
+ loops=1)
+         Index Cond: (user_id = 42)
+         Buffers: shared read=3
+ Planning:
+   Buffers: shared hit=43 read=3
+ Planning Time: 1.630 ms
+ Execution Time: 1.017 ms
